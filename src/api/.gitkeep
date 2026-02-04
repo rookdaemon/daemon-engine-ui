@@ -1,0 +1,2 @@
+// API client for daemon-engine gateway
+// TODO: Implement API client with HTTP and WebSocket support
