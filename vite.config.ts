@@ -9,6 +9,7 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_DAEMON_URL || 'http://localhost:8080',
         changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },
