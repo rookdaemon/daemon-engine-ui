@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# daemon-engine-ui
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web UI for [daemon-engine](https://github.com/rookdaemon/daemon-engine) — a layered chat interface with full Claude Code output visibility.
 
-Currently, two official plugins are available:
+## Purpose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Provide diagnostic-grade visibility into daemon-engine conversations. The default CLI chat is functional but opaque — this UI exposes the full stack:
 
-## React Compiler
+- **Top-level messages**: Clean chat view of user/assistant exchanges
+- **Expandable detail**: Full Claude Code streamed output, tool calls, token usage
+- **Session management**: View, switch, and inspect active sessions
+- **Real-time streaming**: Watch responses arrive token-by-token
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+### Layered Message View
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Each assistant message has two layers:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Layer 1 — Summary (default)**
+- Clean, readable text response
+- No clutter or technical details
+- "Show details" button if diagnostic info available
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+**Layer 2 — Full diagnostic detail (expanded)**
+- 🔧 **Tool calls**: Name, input parameters, and results
+- 📊 **Token usage**: Input, output, and cache read tokens
+- ⏱️ **Duration**: Response time
+- 💻 **Syntax highlighting**: Code blocks with line numbers
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Tool Call Cards
+
+Each tool invocation displays as a collapsible card:
+- Tool name with icon
+- JSON input parameters (collapsible, syntax-highlighted)
+- Tool results (collapsible, first 5 lines visible by default)
+- Syntax highlighting for code content
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/rookdaemon/daemon-engine-ui.git
+cd daemon-engine-ui
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at `http://localhost:5173/`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+The built files will be in the `dist/` directory.
+
+## Architecture
+
+```
+Browser (React/TypeScript)
+    │
+    ├── WebSocket ──→ daemon-engine gateway (streaming)
+    └── HTTP REST ──→ daemon-engine gateway (messages, sessions, health)
+```
+
+Connects to a running daemon-engine instance. No separate backend — the UI talks directly to the gateway API.
+
+## Current Status
+
+✅ **Implemented:**
+- Layered message rendering (summary + expandable detail)
+- Tool call cards with collapsible input/output
+- Syntax highlighting for code blocks
+- Token usage and duration display
+- Expand/collapse state management
+- Mock data demonstration
+
+🚧 **In Progress:**
+- WebSocket integration for real-time streaming
+- daemon-engine API integration
+- Session management
+- Message history persistence
+
+## Development
+
+See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed development guide, component structure, and data models.
+
+## Screenshots
+
+### Default View (Layer 1)
+![Collapsed View](https://github.com/user-attachments/assets/e5eb1430-3221-4fd1-bba1-c19b181f4b38)
+
+### Expanded View (Layer 2)
+![Expanded View](https://github.com/user-attachments/assets/d0d61b3d-3fbc-4c50-af9c-84a5ef6ed529)
+
+### Full Tool Details
+![Full Detail View](https://github.com/user-attachments/assets/d1f53873-8f04-4e34-aa3b-172810d9d954)
+
+## License
+
+MIT
+
