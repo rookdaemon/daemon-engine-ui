@@ -1,0 +1,26 @@
+.code-block {
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.code-block > div {
+  display: flex;
+}
+
+.line-number {
+  display: inline-block;
+  width: 2.5rem;
+  text-align: right;
+  padding-right: 1rem;
+  user-select: none;
+  opacity: 0.5;
+}
+
+.line-content {
+  flex: 1;
+}

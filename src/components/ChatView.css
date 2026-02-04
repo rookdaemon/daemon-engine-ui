@@ -1,0 +1,39 @@
+.chat-view {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.chat-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.chat-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  color: #212529;
+}
+
+.chat-subtitle {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6c757d;
+}
+
+.chat-empty p {
+  margin: 0;
+  font-size: 1rem;
+}
