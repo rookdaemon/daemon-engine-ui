@@ -19,7 +19,7 @@ export class ApiClient {
         if (response.status === 404) {
           return [];
         }
-        throw new Error(`Failed to fetch messages: ${response.statusText}`);
+        throw new Error(`Failed to fetch messages for session '${sessionKey}': ${response.statusText}`);
       }
       const data = await response.json();
       return data.messages || [];

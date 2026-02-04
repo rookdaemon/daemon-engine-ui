@@ -55,7 +55,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled = f
     }
   };
 
-  const handleEmojiSelect = (emoji: any) => {
+  const handleEmojiSelect = (emoji: { native: string }) => {
     const newMessage = message + emoji.native;
     setMessage(newMessage);
     setShowEmojiPicker(false);
@@ -80,7 +80,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled = f
             <Picker
               data={data}
               onEmojiSelect={handleEmojiSelect}
-              theme="light"
+              theme={window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}
               previewPosition="none"
             />
           </div>
