@@ -73,3 +73,45 @@ export interface SessionInfo {
   totalCacheReadTokens?: number;
   messageCount?: number;
 }
+
+// Status endpoint response
+export interface StatusResponse {
+  status: "running";
+  uptime: number;
+  version: string;
+  model: string;
+  startTime: string;
+}
+
+// Logs endpoint response
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  category: string;
+  message: string;
+}
+
+export interface LogsResponse {
+  logs: LogEntry[];
+  count: number;
+}
+
+// History endpoint response
+export interface HistoryEntry {
+  sessionKey: string;
+  timestamp: number;
+  role: "user" | "assistant" | "tool";
+  content: string | null;
+}
+
+export interface HistoryResponse {
+  history: HistoryEntry[];
+  count: number;
+}
+
+// Diagnostic endpoint response
+export interface DiagnosticResponse {
+  status: "ok";
+  checks: Record<string, unknown>;
+  timestamp: string;
+}

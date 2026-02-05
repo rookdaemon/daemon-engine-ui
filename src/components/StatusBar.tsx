@@ -1,9 +1,9 @@
-import type { HealthResponse } from "../types/api.ts";
+import type { StatusResponse } from "../types/api.ts";
 import type { ChatMessage } from "../types/api.ts";
 
 interface Props {
-  health: HealthResponse | null;
-  healthError: string | null;
+  status: StatusResponse | null;
+  statusError: string | null;
   messages: ChatMessage[];
 }
 
@@ -16,7 +16,7 @@ function formatUptime(ms: number): string {
   return `${s}s`;
 }
 
-export function StatusBar({ health, healthError, messages }: Props) {
+export function StatusBar({ status, statusError, messages }: Props) {
   // Detect session ID changes for context reset indicator
   const assistantMsgs = messages.filter(
     (m) => m.role === "assistant" && m.sessionId
@@ -48,19 +48,22 @@ export function StatusBar({ health, healthError, messages }: Props) {
 
   return (
     <div className="border-t border-zinc-700 bg-zinc-900 px-4 py-1.5 flex items-center gap-4 text-[11px] font-mono text-zinc-500">
-      {/* Health indicator */}
+      {/* Status indicator */}
       <div className="flex items-center gap-1.5">
         <span
           className={`inline-block w-2 h-2 rounded-full ${
-            health ? "bg-green-500" : "bg-red-500"
+            status ? "bg-green-500" : "bg-red-500"
           }`}
         />
-        {health ? (
+        {status ? (
           <span>
-            {health.version} &middot; up {formatUptime(health.uptime)}
+            {status.model} &middot; {status.version} &middot; up{" "}
+            {formatUptime(status.uptime)}
           </span>
         ) : (
-          <span className="text-red-400">{healthError || "disconnected"}</span>
+          <span className="text-red-400">
+            {statusError || "disconnected"}
+          </span>
         )}
       </div>
 

@@ -3,6 +3,10 @@ import type {
   MessageResponse,
   SessionResetResponse,
   StreamEvent,
+  StatusResponse,
+  LogsResponse,
+  HistoryResponse,
+  DiagnosticResponse,
 } from "../types/api.ts";
 
 const BASE = "/api";
@@ -124,5 +128,42 @@ export function streamMessage(
         return processChunk();
       })
       .catch(reject);
+  });
+}
+
+export async function getStatus(token: string): Promise<StatusResponse> {
+  return request<StatusResponse>("/status", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getLogs(
+  token: string,
+  lines?: number
+): Promise<LogsResponse> {
+  const params = lines ? `?lines=${lines}` : "";
+  return request<LogsResponse>(`/logs${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getHistory(
+  token: string,
+  limit?: number
+): Promise<HistoryResponse> {
+  const params = limit ? `?limit=${limit}` : "";
+  return request<HistoryResponse>(`/history${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function runDiagnostic(
+  token: string,
+  checks?: string[]
+): Promise<DiagnosticResponse> {
+  return request<DiagnosticResponse>("/diagnostic", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ checks }),
   });
 }

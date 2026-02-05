@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    port: 18789,
     proxy: {
       '/api': {
         target: process.env.VITE_DAEMON_URL || 'http://localhost:8080',

@@ -4,6 +4,7 @@ import { ToolCallDetail } from "./ToolCallDetail.tsx";
 
 interface Props {
   messages: ChatMessage[];
+  loadingHistory?: boolean;
 }
 
 function formatTime(ts: number): string {
@@ -13,12 +14,20 @@ function formatTime(ts: number): string {
   });
 }
 
-export function MessageList({ messages }: Props) {
+export function MessageList({ messages, loadingHistory }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  if (loadingHistory) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
+        <span className="animate-pulse">Restoring conversation...</span>
+      </div>
+    );
+  }
 
   if (messages.length === 0) {
     return (
