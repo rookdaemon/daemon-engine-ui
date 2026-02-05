@@ -10,6 +10,7 @@ import { resetSession } from "./api/client.ts";
 
 const DEFAULT_SESSION_KEY = "webchat:main";
 const DEFAULT_TOKEN = import.meta.env.VITE_DAEMON_TOKEN as string || "dev";
+const UI_VERSION = "0.0.1";
 
 function App() {
   const [sessionKey] = useState(DEFAULT_SESSION_KEY);
@@ -39,6 +40,7 @@ function App() {
           <h1 className="text-sm font-bold tracking-tight text-zinc-200">
             daemon-engine
           </h1>
+          <span className="text-xs text-zinc-500 font-mono">v{UI_VERSION}</span>
           <span className="text-xs text-zinc-600 font-mono">{sessionKey}</span>
         </div>
         <button
