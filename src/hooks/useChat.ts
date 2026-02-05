@@ -67,7 +67,7 @@ export function useChat(sessionKey: string, token: string) {
                     m.id === assistantId
                       ? { 
                           ...m, 
-                          content: m.content + event.text,
+                          content: m.content + (event.text || ""),
                           responseEvents: [...responseEvents],
                         }
                       : m
@@ -113,11 +113,16 @@ export function useChat(sessionKey: string, token: string) {
                 break;
 
               case "done":
-                setMessages((prev) =>
-                  prev.map((m) =>
+                setMessages((prev) => {
+                  const currentMsg = prev.find(m => m.id === assistantId);
+                  // If we have no content but the done event has a result, use it
+                  const doneEvent = event as { type: "done"; sessionId: string; usage: TokenUsage; durationMs: number; result?: string };
+                  const finalContent = currentMsg?.content || doneEvent.result || "";
+                  const updated = prev.map((m) =>
                     m.id === assistantId
                       ? {
                           ...m,
+                          content: finalContent || m.content,
                           streaming: false,
                           usage: event.usage,
                           durationMs: event.durationMs,
@@ -125,15 +130,76 @@ export function useChat(sessionKey: string, token: string) {
                           responseEvents: [...responseEvents],
                         }
                       : m
+                  );
+                  // Log final state for debugging
+                  console.log("[Stream Complete]", {
+                    messageId: assistantId,
+                    contentLength: updated.find(m => m.id === assistantId)?.content.length || 0,
+                    tokenCount: event.usage.outputTokens,
+                    events: responseEvents.length,
+                    hasResult: !!doneEvent.result,
+                  });
+                  return updated;
+                });
+                break;
+
+              case "result":
+                // Handle result events that contain the final text
+                const resultEvent = event as { type: "result"; result?: string; [key: string]: unknown };
+                if (resultEvent.result) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? {
+                            ...m,
+                            content: resultEvent.result || m.content,
+                            streaming: false,
+                            responseEvents: [...responseEvents],
+                          }
+                        : m
+                    )
+                  );
+                }
+                break;
+
+              case "assistant":
+                // Handle assistant events that might contain message content
+                const assistantEvent = event as { type: "assistant"; message?: { content?: Array<{ type?: string; text?: string }> }; [key: string]: unknown };
+                if (assistantEvent.message?.content) {
+                  const textParts = assistantEvent.message.content
+                    .filter((c: any) => c.type === "text" && c.text)
+                    .map((c: any) => c.text)
+                    .join("");
+                  if (textParts) {
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantId
+                          ? {
+                              ...m,
+                              content: textParts,
+                              responseEvents: [...responseEvents],
+                            }
+                          : m
+                      )
+                    );
+                  }
+                }
+                break;
+
+              case "user":
+              case "unknown":
+                // Log but don't process these events
+                console.log(`[SSE] Unhandled event type: ${event.type}`, event);
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          responseEvents: [...responseEvents],
+                        }
+                      : m
                   )
                 );
-                // Log final state for debugging
-                console.log("[Stream Complete]", {
-                  messageId: assistantId,
-                  contentLength: prev.find(m => m.id === assistantId)?.content.length || 0,
-                  tokenCount: event.usage.outputTokens,
-                  events: responseEvents.length,
-                });
                 break;
 
               case "error":

@@ -32,8 +32,10 @@ export type StreamEvent =
   | { type: "token"; text: string }
   | { type: "tool_call"; id: string; name: string; input: unknown }
   | { type: "tool_result"; id: string; output: string }
-  | { type: "done"; sessionId: string; usage: TokenUsage; durationMs: number }
-  | { type: "error"; message: string };
+  | { type: "done"; sessionId: string; usage: TokenUsage; durationMs: number; result?: string }
+  | { type: "result"; result?: string; subtype?: string; [key: string]: unknown }
+  | { type: "error"; message: string }
+  | { type: "user" | "assistant" | "unknown"; [key: string]: unknown };
 
 export interface TokenUsage {
   inputTokens: number;

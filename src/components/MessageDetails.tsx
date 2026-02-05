@@ -93,12 +93,22 @@ export function MessageDetails({ message }: Props) {
                       </span>
                       {event.type === "token" && (
                         <span className="text-zinc-500 text-[10px]">
-                          ({event.text.length} chars)
+                          ({event.text?.length || 0} chars)
                         </span>
                       )}
                       {event.type === "done" && (
                         <span className="text-zinc-500 text-[10px]">
-                          {event.usage.outputTokens} tokens
+                          {event.usage?.outputTokens || 0} tokens
+                        </span>
+                      )}
+                      {event.type === "result" && (
+                        <span className="text-green-400 text-[10px]">
+                          Final result
+                        </span>
+                      )}
+                      {event.type === "assistant" && (
+                        <span className="text-blue-400 text-[10px]">
+                          Assistant message
                         </span>
                       )}
                     </div>
