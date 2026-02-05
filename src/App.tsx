@@ -35,6 +35,8 @@ function App() {
   const tokenValidation = useTokenValidation(activeSessionKey, token);
 
   // Load history on initial mount and when session changes
+  // Note: loadHistory is stable (useCallback) but depends on sessionKey and token,
+  // so this effect runs when either the active session or token changes
   useEffect(() => {
     loadHistory();
   }, [activeSessionKey, loadHistory]);

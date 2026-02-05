@@ -371,7 +371,8 @@ export function useChat(sessionKey: string, token: string) {
         console.error("[History Load Error]", errorMessage, err);
         
         // If the endpoint doesn't exist yet (404), fail silently
-        if (errorMessage.includes("404") || errorMessage.includes("Not Found")) {
+        // Error message format from request() is: "HTTP 404" or similar
+        if (errorMessage.includes("HTTP 404") || errorMessage.includes("Not Found")) {
           console.warn("[History] Endpoint not available yet, starting with empty history");
           setMessages([]);
         } else {
