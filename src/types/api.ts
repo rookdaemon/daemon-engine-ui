@@ -125,3 +125,19 @@ export interface DiagnosticResponse {
   checks: Record<string, unknown>;
   timestamp: string;
 }
+
+// Session message history types
+export interface SessionMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  usage?: TokenUsage;
+  toolCalls?: ToolCall[];
+}
+
+export interface SessionMessagesResponse {
+  messages: SessionMessage[];
+  hasMore: boolean;
+  before?: string; // cursor for pagination
+}

@@ -7,6 +7,7 @@ import type {
   LogsResponse,
   HistoryResponse,
   DiagnosticResponse,
+  SessionMessagesResponse,
 } from "../types/api.ts";
 
 const BASE = "/api";
@@ -227,5 +228,21 @@ export async function runDiagnostic(
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ checks }),
+  });
+}
+
+export async function getSessionMessages(
+  sessionKey: string,
+  token: string,
+  limit?: number,
+  before?: string
+): Promise<SessionMessagesResponse> {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", String(limit));
+  if (before) params.set("before", before);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  
+  return request<SessionMessagesResponse>(`/sessions/${encodeURIComponent(sessionKey)}/messages${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
