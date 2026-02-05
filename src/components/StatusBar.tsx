@@ -44,6 +44,13 @@ export function StatusBar({ health, healthError, messages }: Props) {
 
   const totalAll = totalTokens.input + totalTokens.output;
   const contextPct = Math.min((totalAll / 150000) * 100, 100);
+  
+  // Determine gradient color based on percentage
+  const getGradientColor = (pct: number) => {
+    if (pct > 80) return "bg-gradient-to-r from-red-500 to-red-600";
+    if (pct > 50) return "bg-gradient-to-r from-yellow-500 to-orange-500";
+    return "bg-gradient-to-r from-green-500 to-emerald-500";
+  };
 
   return (
     <div className="border-t border-zinc-700 bg-zinc-900 px-4 py-1.5 flex items-center gap-4 text-[11px] font-mono text-zinc-500">
@@ -69,13 +76,7 @@ export function StatusBar({ health, healthError, messages }: Props) {
           <span>ctx</span>
           <div className="w-24 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${
-                contextPct > 80
-                  ? "bg-red-500"
-                  : contextPct > 50
-                    ? "bg-yellow-500"
-                    : "bg-indigo-500"
-              }`}
+              className={`h-full rounded-full transition-all ${getGradientColor(contextPct)}`}
               style={{ width: `${contextPct}%` }}
             />
           </div>

@@ -5,6 +5,7 @@ import type {
   LogsResponse,
   DiagnosticResponse,
 } from "../types/api.ts";
+import { JsonSyntax } from "../utils/syntax.tsx";
 
 interface Props {
   token: string;
@@ -246,9 +247,9 @@ export function ObservabilityPanel({ token, isOpen, onClose }: Props) {
                   <div className="text-xs text-zinc-500">
                     Timestamp: {formatTimestamp(diagnostics.timestamp)}
                   </div>
-                  <pre className="bg-zinc-800 p-3 rounded border border-zinc-700 text-xs text-zinc-300 overflow-x-auto">
-                    {JSON.stringify(diagnostics.checks, null, 2)}
-                  </pre>
+                  <div className="bg-zinc-800 p-3 rounded border border-zinc-700 overflow-x-auto">
+                    <JsonSyntax json={diagnostics.checks} className="text-zinc-300" />
+                  </div>
                 </div>
               ) : (
                 <div className="text-zinc-500 text-sm">
