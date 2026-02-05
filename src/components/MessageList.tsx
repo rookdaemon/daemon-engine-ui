@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/api.ts";
 import { ToolCallDetail } from "./ToolCallDetail.tsx";
+import { MessageDetails } from "./MessageDetails.tsx";
 
 interface Props {
   messages: ChatMessage[];
@@ -73,6 +74,7 @@ export function MessageList({ messages, loadingHistory }: Props) {
             {msg.toolCalls && msg.toolCalls.length > 0 && (
               <ToolCallDetail toolCalls={msg.toolCalls} />
             )}
+            <MessageDetails message={msg} />
             {msg.usage && (
               <div className="mt-2 flex gap-3 text-[10px] text-zinc-500 font-mono">
                 <span>in:{msg.usage.inputTokens.toLocaleString()}</span>

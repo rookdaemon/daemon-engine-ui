@@ -25,13 +25,20 @@ export function useChat(sessionKey: string, token: string) {
       };
 
       const assistantId = genId();
+      const requestTimestamp = Date.now();
       const assistantMsg: ChatMessage = {
         id: assistantId,
         role: "assistant",
         content: "",
-        timestamp: Date.now(),
+        timestamp: requestTimestamp,
         streaming: true,
         toolCalls: [],
+        requestData: {
+          sessionKey,
+          message: text,
+          timestamp: requestTimestamp,
+        },
+        responseEvents: [],
       };
 
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
@@ -41,6 +48,7 @@ export function useChat(sessionKey: string, token: string) {
       abortRef.current = controller;
 
       const toolCalls: ToolCall[] = [];
+      const responseEvents: StreamEvent[] = [];
 
       try {
         await streamMessage(
@@ -48,12 +56,20 @@ export function useChat(sessionKey: string, token: string) {
           text,
           token,
           (event: StreamEvent) => {
+            // Track all events for debugging
+            responseEvents.push(event);
+            console.log("[SSE Event]", event.type, event);
+
             switch (event.type) {
               case "token":
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId
-                      ? { ...m, content: m.content + event.text }
+                      ? { 
+                          ...m, 
+                          content: m.content + event.text,
+                          responseEvents: [...responseEvents],
+                        }
                       : m
                   )
                 );
@@ -68,7 +84,11 @@ export function useChat(sessionKey: string, token: string) {
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId
-                      ? { ...m, toolCalls: [...toolCalls] }
+                      ? { 
+                          ...m, 
+                          toolCalls: [...toolCalls],
+                          responseEvents: [...responseEvents],
+                        }
                       : m
                   )
                 );
@@ -81,7 +101,11 @@ export function useChat(sessionKey: string, token: string) {
                   setMessages((prev) =>
                     prev.map((m) =>
                       m.id === assistantId
-                        ? { ...m, toolCalls: [...toolCalls] }
+                        ? { 
+                            ...m, 
+                            toolCalls: [...toolCalls],
+                            responseEvents: [...responseEvents],
+                          }
                         : m
                     )
                   );
@@ -98,10 +122,18 @@ export function useChat(sessionKey: string, token: string) {
                           usage: event.usage,
                           durationMs: event.durationMs,
                           sessionId: event.sessionId,
+                          responseEvents: [...responseEvents],
                         }
                       : m
                   )
                 );
+                // Log final state for debugging
+                console.log("[Stream Complete]", {
+                  messageId: assistantId,
+                  contentLength: prev.find(m => m.id === assistantId)?.content.length || 0,
+                  tokenCount: event.usage.outputTokens,
+                  events: responseEvents.length,
+                });
                 break;
 
               case "error":
@@ -113,6 +145,8 @@ export function useChat(sessionKey: string, token: string) {
                           streaming: false,
                           content:
                             m.content + `\n\n[Error: ${event.message}]`,
+                          responseError: event.message,
+                          responseEvents: [...responseEvents],
                         }
                       : m
                   )
@@ -125,6 +159,7 @@ export function useChat(sessionKey: string, token: string) {
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           const errorMessage = (err as Error).message;
+          console.error("[Stream Error]", errorMessage, err);
           setError(errorMessage);
           setMessages((prev) =>
             prev.map((m) =>
@@ -135,6 +170,8 @@ export function useChat(sessionKey: string, token: string) {
                     content:
                       m.content +
                       `\n\n[Error: ${errorMessage}]`,
+                    responseError: errorMessage,
+                    responseEvents: [...responseEvents],
                   }
                 : m
             )

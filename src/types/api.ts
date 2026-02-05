@@ -52,6 +52,14 @@ export interface ChatMessage {
   usage?: TokenUsage;
   durationMs?: number;
   sessionId?: string;
+  // Request/response debugging details
+  requestData?: {
+    sessionKey: string;
+    message: string;
+    timestamp: number;
+  };
+  responseEvents?: StreamEvent[];
+  responseError?: string;
 }
 
 export interface ToolCall {

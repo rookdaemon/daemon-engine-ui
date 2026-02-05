@@ -125,10 +125,16 @@ export function streamMessage(
 
         const decoder = new TextDecoder();
         let buffer = "";
+        let eventCount = 0;
 
         function processChunk(): Promise<void> {
           return reader!.read().then(({ done, value }) => {
             if (done) {
+              // Process any remaining buffer
+              if (buffer.trim()) {
+                console.warn("[SSE] Unprocessed buffer at end:", buffer);
+              }
+              console.log(`[SSE] Stream complete. Processed ${eventCount} events.`);
               resolve();
               return;
             }
@@ -139,18 +145,34 @@ export function streamMessage(
 
             let currentEventType = "";
             for (const line of lines) {
-              if (line.startsWith("event: ")) {
-                currentEventType = line.slice(7).trim();
-              } else if (line.startsWith("data: ") && currentEventType) {
+              const trimmed = line.trim();
+              
+              if (trimmed.startsWith("event: ")) {
+                currentEventType = trimmed.slice(7).trim();
+              } else if (trimmed.startsWith("data: ")) {
                 try {
-                  const data = JSON.parse(line.slice(6));
-                  onEvent({ type: currentEventType, ...data } as StreamEvent);
-                } catch {
-                  // skip malformed SSE data
+                  const dataStr = trimmed.slice(6);
+                  const data = JSON.parse(dataStr);
+                  const event = { type: currentEventType || "unknown", ...data } as StreamEvent;
+                  
+                  if (!currentEventType) {
+                    console.warn("[SSE] Received data without event type:", dataStr);
+                  }
+                  
+                  eventCount++;
+                  onEvent(event);
+                } catch (err) {
+                  console.error("[SSE] Failed to parse data line:", trimmed, err);
                 }
                 currentEventType = "";
-              } else if (line.trim() === "") {
+              } else if (trimmed === "") {
+                // Empty line resets event type (SSE format)
                 currentEventType = "";
+              } else if (trimmed.startsWith(":")) {
+                // SSE comment, ignore
+              } else {
+                // Unexpected line format
+                console.warn("[SSE] Unexpected line format:", trimmed);
               }
             }
 
