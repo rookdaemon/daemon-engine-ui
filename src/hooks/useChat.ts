@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { streamMessage, getHistory } from "../api/client.ts";
-import type { ChatMessage, StreamEvent, ToolCall, HistoryEntry } from "../types/api.ts";
+import { useCallback, useRef, useState } from "react";
+import { streamMessage } from "../api/client.ts";
+import type { ChatMessage, StreamEvent, ToolCall } from "../types/api.ts";
 
 let nextId = 0;
 function genId(): string {
@@ -10,43 +10,8 @@ function genId(): string {
 export function useChat(sessionKey: string, token: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  // Load history on mount
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingHistory(true);
-    
-    getHistory(token, 100)
-      .then((response) => {
-        if (cancelled) return;
-        
-        // Filter history to current session and convert to ChatMessage format
-        const sessionHistory = response.history.filter(
-          (entry: HistoryEntry) => entry.sessionKey === sessionKey
-        );
-        
-        const restoredMessages: ChatMessage[] = sessionHistory.map((entry) => ({
-          id: genId(),
-          role: entry.role === "tool" ? "assistant" : entry.role,
-          content: entry.content || "",
-          timestamp: entry.timestamp,
-        }));
-        
-        setMessages(restoredMessages);
-        setLoadingHistory(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("Failed to load history:", err);
-        setLoadingHistory(false);
-      });
-    
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionKey, token]);
 
   const send = useCallback(
     async (text: string) => {
@@ -159,6 +124,8 @@ export function useChat(sessionKey: string, token: string) {
         );
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
+          const errorMessage = (err as Error).message;
+          setError(errorMessage);
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
@@ -167,7 +134,7 @@ export function useChat(sessionKey: string, token: string) {
                     streaming: false,
                     content:
                       m.content +
-                      `\n\n[Error: ${(err as Error).message}]`,
+                      `\n\n[Error: ${errorMessage}]`,
                   }
                 : m
             )
@@ -187,7 +154,12 @@ export function useChat(sessionKey: string, token: string) {
 
   const clearMessages = useCallback(() => {
     setMessages([]);
+    setError(null);
   }, []);
 
-  return { messages, streaming, loadingHistory, send, abort, clearMessages };
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  return { messages, streaming, send, abort, clearMessages, error, clearError };
 }
