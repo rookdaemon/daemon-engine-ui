@@ -48,10 +48,8 @@ export function useTokenValidation(
     setResult((prev) => ({ ...prev, checking: true, error: null }));
 
     // Step 1: Check if server is reachable (no auth required)
-    let serverReachable = false;
     try {
       await getHealth();
-      serverReachable = true;
     } catch (err) {
       setResult({
         serverReachable: false,

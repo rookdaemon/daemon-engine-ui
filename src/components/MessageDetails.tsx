@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { ChatMessage, StreamEvent } from "../types/api.ts";
+import type { ChatMessage } from "../types/api.ts";
 
 interface Props {
   message: ChatMessage;
