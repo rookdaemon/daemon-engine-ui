@@ -46,9 +46,8 @@ function App() {
 
   const handleSessionSwitch = useCallback((sessionKey: string) => {
     setActiveSessionKey(sessionKey);
-    // Load history for the new session
-    loadHistory();
-  }, [setActiveSessionKey, loadHistory]);
+    // History will be loaded by the useEffect that monitors activeSessionKey
+  }, [setActiveSessionKey]);
 
   const handleSessionCreate = useCallback((sessionKey: string) => {
     addSession(sessionKey);
