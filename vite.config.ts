@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 18789,
-    allowedHosts: ['all'],
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: process.env.VITE_DAEMON_URL || 'http://localhost:8080',
