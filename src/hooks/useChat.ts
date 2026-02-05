@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import { streamMessage } from "../api/client.ts";
-import type { ChatMessage, StreamEvent, ToolCall } from "../types/api.ts";
+import { streamMessage, getSessionMessages } from "../api/client.ts";
+import type { ChatMessage, StreamEvent, ToolCall, SessionMessage } from "../types/api.ts";
 
 let nextId = 0;
 function genId(): string {
@@ -60,6 +60,7 @@ function extractTextFromEvent(event: any): string {
 export function useChat(sessionKey: string, token: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -345,5 +346,44 @@ export function useChat(sessionKey: string, token: string) {
     setError(null);
   }, []);
 
-  return { messages, streaming, send, abort, clearMessages, error, clearError };
+  const loadHistory = useCallback(
+    async (limit = 50) => {
+      setLoadingHistory(true);
+      setError(null);
+      
+      try {
+        const response = await getSessionMessages(sessionKey, token, limit);
+        
+        // Convert SessionMessage to ChatMessage
+        const historyMessages: ChatMessage[] = response.messages.map((msg: SessionMessage) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          usage: msg.usage,
+          toolCalls: msg.toolCalls,
+          streaming: false,
+        }));
+        
+        setMessages(historyMessages);
+      } catch (err) {
+        const errorMessage = (err as Error).message;
+        console.error("[History Load Error]", errorMessage, err);
+        
+        // If the endpoint doesn't exist yet (404), fail silently
+        // Error message format from request() is: "HTTP 404" or similar
+        if (errorMessage.includes("HTTP 404") || errorMessage.includes("Not Found")) {
+          console.warn("[History] Endpoint not available yet, starting with empty history");
+          setMessages([]);
+        } else {
+          setError(`Failed to load message history: ${errorMessage}`);
+        }
+      } finally {
+        setLoadingHistory(false);
+      }
+    },
+    [sessionKey, token]
+  );
+
+  return { messages, streaming, loadingHistory, send, abort, clearMessages, loadHistory, error, clearError };
 }

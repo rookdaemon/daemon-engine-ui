@@ -27,12 +27,19 @@ function App() {
     sessionsMetadata,
   } = useSessionManager();
 
-  const { messages, streaming, send, abort, clearMessages, error: chatError, clearError } = useChat(
+  const { messages, streaming, loadingHistory, send, abort, clearMessages, loadHistory, error: chatError, clearError } = useChat(
     activeSessionKey,
     token
   );
   const { health, error: healthError } = useHealth();
   const tokenValidation = useTokenValidation(activeSessionKey, token);
+
+  // Load history on initial mount and when session changes
+  // Note: loadHistory is stable (useCallback) but depends on sessionKey and token,
+  // so this effect runs when either the active session or token changes
+  useEffect(() => {
+    loadHistory();
+  }, [activeSessionKey, loadHistory]);
 
   // Update session messages whenever messages change
   useEffect(() => {
@@ -41,6 +48,7 @@ function App() {
 
   const handleSessionSwitch = useCallback((sessionKey: string) => {
     setActiveSessionKey(sessionKey);
+    // History will be loaded by the useEffect that monitors activeSessionKey
   }, [setActiveSessionKey]);
 
   const handleSessionCreate = useCallback((sessionKey: string) => {
@@ -106,7 +114,7 @@ function App() {
           )}
 
           {/* Messages */}
-          <MessageList messages={messages} />
+          <MessageList messages={messages} loadingHistory={loadingHistory} />
 
           {/* Input */}
           <ChatInput onSend={send} disabled={streaming} onAbort={abort} />
