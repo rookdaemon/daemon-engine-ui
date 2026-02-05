@@ -24,6 +24,8 @@ export function MessageDetails({ message }: Props) {
       >
         <svg
           className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+          width="16"
+          height="16"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -122,7 +124,7 @@ export function MessageDetails({ message }: Props) {
                 </div>
                 <div>
                   <span className="text-zinc-500">Is Empty:</span>{" "}
-                  <span className={message.content.length === 0 ? "text-red-400" : "text-green-400"}>
+                  <span className={`text-[10px] ${message.content.length === 0 ? "text-red-400" : "text-green-400"}`}>
                     {message.content.length === 0 ? "Yes" : "No"}
                   </span>
                 </div>
