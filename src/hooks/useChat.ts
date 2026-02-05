@@ -7,6 +7,56 @@ function genId(): string {
   return `msg-${Date.now()}-${nextId++}`;
 }
 
+// Helper to recursively extract text from nested objects
+function extractTextFromEvent(event: any): string {
+  if (typeof event === "string") return event;
+  if (typeof event !== "object" || event === null) return "";
+  
+  // Check common fields
+  if (event.result) return String(event.result);
+  if (event.text) return String(event.text);
+  if (event.content) {
+    if (typeof event.content === "string") return event.content;
+    if (Array.isArray(event.content)) {
+      return event.content
+        .filter((c: any) => c?.type === "text" && c?.text)
+        .map((c: any) => c.text)
+        .join("");
+    }
+  }
+  
+  // Check nested message.content
+  if (event.message?.content) {
+    if (Array.isArray(event.message.content)) {
+      const text = event.message.content
+        .filter((c: any) => c?.type === "text" && c?.text)
+        .map((c: any) => c.text)
+        .join("");
+      if (text) return text;
+    }
+  }
+  
+  // Recursively search in nested objects (limited depth)
+  const searchDepth = (obj: any, depth: number): string => {
+    if (depth > 3) return ""; // Limit recursion depth
+    if (typeof obj !== "object" || obj === null) return "";
+    
+    for (const [key, value] of Object.entries(obj)) {
+      if (key === "result" || key === "text" || key === "content") {
+        const found = extractTextFromEvent(value);
+        if (found) return found;
+      }
+      if (typeof value === "object" && value !== null) {
+        const found = searchDepth(value, depth + 1);
+        if (found) return found;
+      }
+    }
+    return "";
+  };
+  
+  return searchDepth(event, 0);
+}
+
 export function useChat(sessionKey: string, token: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -115,9 +165,23 @@ export function useChat(sessionKey: string, token: string) {
               case "done":
                 setMessages((prev) => {
                   const currentMsg = prev.find(m => m.id === assistantId);
-                  // If we have no content but the done event has a result, use it
-                  const doneEvent = event as { type: "done"; sessionId: string; usage: TokenUsage; durationMs: number; result?: string };
-                  const finalContent = currentMsg?.content || doneEvent.result || "";
+                  // Extract result from any possible field in the done event using recursive search
+                  const doneEvent = event as any;
+                  const resultText = extractTextFromEvent(doneEvent);
+                  
+                  const finalContent = currentMsg?.content || resultText || "";
+                  
+                  console.log("[Done Event Debug]", {
+                    messageId: assistantId,
+                    currentContentLength: currentMsg?.content.length || 0,
+                    resultTextLength: resultText.length,
+                    resultTextPreview: resultText.substring(0, 200),
+                    finalContentLength: finalContent.length,
+                    tokenCount: event.usage.outputTokens,
+                    eventKeys: Object.keys(doneEvent),
+                    fullEvent: JSON.stringify(doneEvent, null, 2).substring(0, 500),
+                  });
+                  
                   const updated = prev.map((m) =>
                     m.id === assistantId
                       ? {
@@ -131,13 +195,14 @@ export function useChat(sessionKey: string, token: string) {
                         }
                       : m
                   );
+                  
                   // Log final state for debugging
                   console.log("[Stream Complete]", {
                     messageId: assistantId,
                     contentLength: updated.find(m => m.id === assistantId)?.content.length || 0,
                     tokenCount: event.usage.outputTokens,
                     events: responseEvents.length,
-                    hasResult: !!doneEvent.result,
+                    hasResult: !!resultText,
                   });
                   return updated;
                 });
@@ -145,14 +210,24 @@ export function useChat(sessionKey: string, token: string) {
 
               case "result":
                 // Handle result events that contain the final text
-                const resultEvent = event as { type: "result"; result?: string; [key: string]: unknown };
-                if (resultEvent.result) {
+                const resultEvent = event as any;
+                const resultText = extractTextFromEvent(resultEvent);
+                
+                console.log("[Result Event Debug]", {
+                  messageId: assistantId,
+                  resultTextLength: resultText.length,
+                  resultTextPreview: resultText.substring(0, 200),
+                  eventKeys: Object.keys(resultEvent),
+                  fullEvent: JSON.stringify(resultEvent, null, 2).substring(0, 500),
+                });
+                
+                if (resultText) {
                   setMessages((prev) =>
                     prev.map((m) =>
                       m.id === assistantId
                         ? {
                             ...m,
-                            content: resultEvent.result || m.content,
+                            content: resultText,
                             streaming: false,
                             responseEvents: [...responseEvents],
                           }
@@ -164,25 +239,31 @@ export function useChat(sessionKey: string, token: string) {
 
               case "assistant":
                 // Handle assistant events that might contain message content
-                const assistantEvent = event as { type: "assistant"; message?: { content?: Array<{ type?: string; text?: string }> }; [key: string]: unknown };
-                if (assistantEvent.message?.content) {
-                  const textParts = assistantEvent.message.content
-                    .filter((c: any) => c.type === "text" && c.text)
-                    .map((c: any) => c.text)
-                    .join("");
-                  if (textParts) {
-                    setMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === assistantId
-                          ? {
-                              ...m,
-                              content: textParts,
-                              responseEvents: [...responseEvents],
-                            }
-                          : m
-                      )
-                    );
-                  }
+                const assistantEvent = event as any;
+                const textParts = extractTextFromEvent(assistantEvent);
+                
+                console.log("[Assistant Event Debug]", {
+                  messageId: assistantId,
+                  textPartsLength: textParts.length,
+                  textPartsPreview: textParts.substring(0, 200),
+                  hasMessage: !!assistantEvent.message,
+                  hasContent: !!assistantEvent.content,
+                  eventKeys: Object.keys(assistantEvent),
+                  fullEvent: JSON.stringify(assistantEvent, null, 2).substring(0, 500),
+                });
+                
+                if (textParts) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId
+                        ? {
+                            ...m,
+                            content: textParts,
+                            responseEvents: [...responseEvents],
+                          }
+                        : m
+                    )
+                  );
                 }
                 break;
 

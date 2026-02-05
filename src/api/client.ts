@@ -159,6 +159,13 @@ export function streamMessage(
                     console.warn("[SSE] Received data without event type:", dataStr);
                   }
                   
+                  // Log all received SSE events for debugging
+                  console.log(`[SSE Raw] event: ${currentEventType || "unknown"}`, {
+                    eventType: currentEventType,
+                    dataKeys: Object.keys(data),
+                    fullData: data,
+                  });
+                  
                   eventCount++;
                   onEvent(event);
                 } catch (err) {
