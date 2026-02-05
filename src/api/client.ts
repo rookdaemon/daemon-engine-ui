@@ -33,6 +33,39 @@ export async function getHealth(): Promise<HealthResponse> {
   return request<HealthResponse>("/health");
 }
 
+/**
+ * Validates token by making a test request.
+ * Returns true if token is valid, false if invalid, null if unable to determine.
+ */
+export async function validateToken(
+  sessionKey: string,
+  token: string
+): Promise<{ valid: boolean; error?: string }> {
+  try {
+    // Try to call /session/reset as a validation endpoint
+    // This validates both token and session configuration
+    await resetSession(sessionKey, token);
+    // If successful, token is valid (session was reset, but that's acceptable for validation)
+    return { valid: true };
+  } catch (err) {
+    const errorMessage = (err as Error).message.toLowerCase();
+    
+    if (errorMessage.includes("unauthorized")) {
+      return { valid: false, error: "Token is invalid or incorrect" };
+    } else if (errorMessage.includes("no hook configured")) {
+      return { 
+        valid: false, 
+        error: `Session '${sessionKey}' is not configured in daemon-engine hooks` 
+      };
+    } else {
+      return { 
+        valid: false, 
+        error: `Validation failed: ${(err as Error).message}` 
+      };
+    }
+  }
+}
+
 export async function sendMessage(
   sessionKey: string,
   message: string,

@@ -1,5 +1,5 @@
 interface Props {
-  error: string | null;
+  error: string | null | undefined;
   onDismiss?: () => void;
 }
 

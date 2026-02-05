@@ -5,6 +5,7 @@ import { StatusBar } from "./components/StatusBar.tsx";
 import { ErrorBanner } from "./components/ErrorBanner.tsx";
 import { useChat } from "./hooks/useChat.ts";
 import { useHealth } from "./hooks/useHealth.ts";
+import { useTokenValidation } from "./hooks/useTokenValidation.ts";
 import { resetSession } from "./api/client.ts";
 
 const DEFAULT_SESSION_KEY = "webchat:main";
@@ -19,6 +20,7 @@ function App() {
     token
   );
   const { health, error: healthError } = useHealth();
+  const tokenValidation = useTokenValidation(sessionKey, token);
 
   const handleReset = useCallback(async () => {
     try {
@@ -48,7 +50,22 @@ function App() {
       </header>
 
       {/* Error Banner */}
-      <ErrorBanner error={chatError || healthError} onDismiss={clearError} />
+      <ErrorBanner 
+        error={
+          tokenValidation.error || 
+          chatError || 
+          healthError || 
+          undefined
+        } 
+        onDismiss={clearError} 
+      />
+      
+      {/* Loading indicator during validation */}
+      {tokenValidation.checking && (
+        <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900 text-xs text-zinc-400 text-center">
+          Validating connection and token...
+        </div>
+      )}
 
       {/* Messages */}
       <MessageList messages={messages} />
