@@ -48,7 +48,7 @@ export function MessageList({ messages, loadingHistory }: Props) {
           <div
             className={`rounded-lg px-4 py-3 ${
               msg.role === "user"
-                ? "bg-indigo-600 text-white max-w-[75%]"
+                ? "bg-blue-950 border border-blue-900/50 text-blue-100 max-w-[75%]"
                 : "bg-zinc-800 text-zinc-100 w-full"
             }`}
           >

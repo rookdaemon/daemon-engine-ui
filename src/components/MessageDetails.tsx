@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import type { ChatMessage } from "../types/api.ts";
+import { JsonSyntax } from "../utils/syntax.tsx";
 
 interface Props {
   message: ChatMessage;
@@ -112,9 +113,9 @@ export function MessageDetails({ message }: Props) {
                         </span>
                       )}
                     </div>
-                    <pre className="text-zinc-300 text-[10px] whitespace-pre-wrap break-words">
-                      {JSON.stringify(event, null, 2)}
-                    </pre>
+                    <div className="bg-zinc-900/50 p-2 rounded">
+                      <JsonSyntax json={event} className="text-zinc-300" />
+                    </div>
                   </div>
                 ))}
               </div>
